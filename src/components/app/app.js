@@ -11,7 +11,7 @@ export default class App extends Component {
       {
         id: uuidv4(),
         completed: false,
-        description: 'Completed task',
+        description: 't',
         minutes: 3,
         seconds: 10,
         timeStamp: Date.parse('June 16 1993'),

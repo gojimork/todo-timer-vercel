@@ -1,44 +1,56 @@
 import { Component } from 'react';
 
 export default class Timer extends Component {
-  state = { secondsLeft: this.props.seconds, minutesLeft: this.props.minutes, timer: null, timerStarted: false };
+  secondsFromProps = this.props.minutes * 60 + this.props.seconds;
+
+  state = {
+    secondsDeclaration: this.secondsFromProps,
+    secondsLeft: this.secondsFromProps,
+    dateStartTimer: null,
+    timer: null,
+    timerStarted: false,
+  };
+
+  changeTimerValue = () => {
+    this.setState(({ dateStartTimer, secondsDeclaration }) => {
+      const secondsSinceStart = Math.floor((Date.now() - dateStartTimer) / 1000);
+      const newSecondsLeft = secondsDeclaration - secondsSinceStart;
+      if (newSecondsLeft === 0) this.timerFinish();
+      return { secondsLeft: newSecondsLeft };
+    });
+  };
 
   timerStart = () => {
-    this.setState({ timerStarted: true });
-    const timer = setInterval(() => {
-      this.setState(({ secondsLeft, minutesLeft }) => {
-        const newSecondsLeft = secondsLeft - 1;
-        if (newSecondsLeft === 0 && minutesLeft === 0) {
-          clearInterval(timer);
-        } else if (newSecondsLeft === -1 && minutesLeft > 0) {
-          const newMinutesLeft = minutesLeft - 1;
-          return {
-            secondsLeft: 59,
-            minutesLeft: newMinutesLeft,
-          };
-        }
-        return { secondsLeft: newSecondsLeft };
-      });
-    }, 1000);
+    if (this.state.secondsLeft === 0) return;
+    const startTime = Date.now();
+    this.setState({ dateStartTimer: startTime, timerStarted: true });
+    const timer = setInterval(() => this.changeTimerValue(), 1000);
     this.setState({ timer });
   };
 
   timerPause = () => {
-    this.setState({ timerStarted: false });
+    const { timer, secondsLeft } = this.state;
+    this.setState({ timerStarted: false, secondsDeclaration: secondsLeft });
+    clearInterval(timer);
+  };
+
+  timerFinish = () => {
+    this.setState({ timerStarted: false, secondsDeclaration: 0 });
     clearInterval(this.state.timer);
   };
 
   render() {
-    const { secondsLeft, minutesLeft, timerStarted } = this.state;
+    const { timerStarted, secondsLeft } = this.state;
     const play = <button type="button" className="icon-play" onClick={this.timerStart} />;
     const pause = <button type="button" className="icon-pause" onClick={this.timerPause} />;
     const button = timerStarted ? pause : play;
-    const buttonVeiw = minutesLeft > 0 || secondsLeft ? button : null;
-    const seconds = secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft;
-    const minutes = minutesLeft < 10 ? `0${minutesLeft}` : minutesLeft;
+    const minutes = Math.floor(secondsLeft / 60)
+      .toString()
+      .padStart(2, '0');
+    const seconds = (secondsLeft % 60).toString().padStart(2, '0');
     return (
       <div>
-        {buttonVeiw}
+        {button}
         <span>
           {minutes}:{seconds}
         </span>
